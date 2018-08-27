@@ -9,7 +9,7 @@ public static void Print(this object obj, string end = "\n")
 }
 ```
 
-##### Option example:
+### Option example:
 
 Format
 ```c#
@@ -31,6 +31,7 @@ Option<int> option3 = 20.ToOption();
 Option<int> option4 = new Option<int>(20);
 ```
 
+Pattern matching for optional:
 ```c#
 Option<string> none = null;
 
@@ -55,6 +56,7 @@ string returnMath2 = someOpt.Match(
 ); // return "Hello"
 ```
 
+Operators example:
 ```c#
 var option1 = 2.ToOption();
 
