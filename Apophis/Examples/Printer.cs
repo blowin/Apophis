@@ -1,6 +1,6 @@
 using System;
 
-namespace FunctionalProgramming.Apophis.Examples
+namespace Apophis.Examples
 {
     public static class Printer
     {

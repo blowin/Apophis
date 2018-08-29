@@ -4,24 +4,33 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Text;
+using Apophis.Types.EnumTypes;
+using Apophis.Types.Exceptions;
+using Apophis.Types.Extensions;
+using Apophis.Types.Milxn;
+using Apophis.Types.Monads.Either;
 
-namespace FunctionalProgramming.Apophis.Types.Monads.Option
+namespace Apophis.Types.Monads.Option
 {
         /// <summary>
         /// Represents optional values. It is in one of two states. There is an object(Some) or not(None).
         /// </summary>
         /// <typeparam name="T">Type of hold value</typeparam>
+        [Serializable]
         public struct Option<T> :
                 IEquatable<Option<T>>,
                 IEquatable<T>,
                 IEnumerable<T>,
                 IComparable<Option<T>>,
-                IComparable<T>
+                IComparable<T>,
+                IComparable,
+                ITypeClass<OptionType>
         {
-                private readonly bool _hasValue;
-
                 private T _value;
+                
+                private bool _hasValue;
+
+                #region Properties
 
                 /// <summary>
                 /// Return option state Some or None
@@ -42,10 +51,14 @@ namespace FunctionalProgramming.Apophis.Types.Monads.Option
                 /// <summary>
                 /// Return true if option Some
                 /// </summary>
-                public bool Contain
+                public bool NonEmpty
                 {
                         get { return _hasValue; }
                 }
+
+                #endregion
+
+                #region Constructors
 
                 /// <summary>
                 /// Create Option from value
@@ -67,8 +80,15 @@ namespace FunctionalProgramming.Apophis.Types.Monads.Option
                         _hasValue = value._hasValue;
                 }
 
+                #endregion
+
+                #region Equals
+
                 public override bool Equals(object obj)
                 {
+                        if (obj == null)
+                                return false;
+                        
                         if (obj is Option<T>)
                                 return Equals((Option<T>) obj);
                         if (obj is T)
@@ -76,6 +96,18 @@ namespace FunctionalProgramming.Apophis.Types.Monads.Option
 
                         return false;
                 }
+                
+                public bool Equals(Option<T> other)
+                {
+                        return _hasValue && other._hasValue && _value.Equals(other._value);
+                }
+
+                public bool Equals(T other)
+                {
+                        return _hasValue && _value.Equals(other);
+                }
+
+                #endregion
 
                 public override int GetHashCode()
                 {
@@ -96,6 +128,22 @@ namespace FunctionalProgramming.Apophis.Types.Monads.Option
                                 yield return _value;
                 }
 
+                #region CompareTo
+
+                public int CompareTo(object obj)
+                {
+                        if (obj == null)
+                                return 1;
+
+                        if (obj is Option<T>)
+                                return CompareTo((Option<T>) obj);
+
+                        if (obj is T)
+                                return CompareTo((T) obj);
+
+                        return -1;
+                }
+                
                 public int CompareTo(Option<T> other)
                 {
                         if (_hasValue)
@@ -109,28 +157,11 @@ namespace FunctionalProgramming.Apophis.Types.Monads.Option
                         return _hasValue ? Comparer<T>.Default.Compare(_value, other) : -1;
                 }
 
+                #endregion
+
                 public override string ToString()
                 {
-                        if (_hasValue)
-                        {
-                                return new StringBuilder("Some(".Length * 2)
-                                        .Append("Some(")
-                                        .Append(_value)
-                                        .Append(')')
-                                        .ToString();
-                        }
-
-                        return "None";
-                }
-
-                public bool Equals(Option<T> other)
-                {
-                        return _hasValue && other._hasValue && _value.Equals(other._value);
-                }
-
-                public bool Equals(T other)
-                {
-                        return _hasValue && _value.Equals(other);
+                        return _hasValue ? string.Concat("Some(", _value.ToString(), ")") : "None";
                 }
 
 #if NET_4_6 || NET_STANDARD_2_0
@@ -146,8 +177,10 @@ namespace FunctionalProgramming.Apophis.Types.Monads.Option
 #endif
                 public static explicit operator bool(Option<T> opt)
                 {
-                        return opt.Contain;
+                        return opt.NonEmpty;
                 }
+
+                #region Operators
 
                 /// <summary>
                 /// Returns the result of applying handler to this Option's value if
@@ -165,7 +198,7 @@ namespace FunctionalProgramming.Apophis.Types.Monads.Option
                 public Option<R> FlatMap<R>(Func<T, Option<R>> handler)
                 {
 #if APOPHIS_CHECK
-                        OptionalExceptions.NullHandlerCheck(handler);
+                        ExceptionUtility.NullHandlerCheck(handler);
 #endif
                         return _hasValue ? handler(_value) : EmptyOption<R>();
                 }
@@ -182,7 +215,7 @@ namespace FunctionalProgramming.Apophis.Types.Monads.Option
                 public Option<R> Map<R>(Func<T, R> handler)
                 {
 #if APOPHIS_CHECK
-                        OptionalExceptions.NullHandlerCheck(handler);
+                        ExceptionUtility.NullHandlerCheck(handler);
 #endif
                         return _hasValue ? handler(_value).ToOption() : EmptyOption<R>();
                 }
@@ -198,7 +231,7 @@ namespace FunctionalProgramming.Apophis.Types.Monads.Option
                 public Option<T> Filter(Func<T, bool> predicat)
                 {
 #if APOPHIS_CHECK
-                        OptionalExceptions.NullHandlerCheck(predicat, "Function for check, not be null");
+                        ExceptionUtility.NullPredicatCheck(predicat);
 #endif
                         return _hasValue && predicat(_value) ? this : EmptyOption<T>();
                 }
@@ -215,7 +248,7 @@ namespace FunctionalProgramming.Apophis.Types.Monads.Option
                 public Option<T> FilterNot(Func<T, bool> predicat)
                 {
 #if APOPHIS_CHECK
-                        OptionalExceptions.NullHandlerCheck(predicat, "Function for check, not be null");
+                        ExceptionUtility.NullPredicatCheck(predicat);
 #endif
                         return _hasValue && !predicat(_value) ? this : EmptyOption<T>();
                 }
@@ -232,7 +265,7 @@ namespace FunctionalProgramming.Apophis.Types.Monads.Option
                 public bool Exist(Func<T, bool> predicat)
                 {
 #if APOPHIS_CHECK
-                        OptionalExceptions.NullHandlerCheck(predicat, "Function for check, not be null");
+                        ExceptionUtility.NullPredicatCheck(predicat);
 #endif
                         return _hasValue && predicat(_value);
                 }
@@ -248,7 +281,7 @@ namespace FunctionalProgramming.Apophis.Types.Monads.Option
                 public bool Forall(Func<T, bool> predicat)
                 {
 #if APOPHIS_CHECK
-                        OptionalExceptions.NullHandlerCheck(predicat, "Function for check, not be null");
+                        ExceptionUtility.NullPredicatCheck(predicat);
 #endif
                         return !_hasValue || predicat(_value);
                 }
@@ -265,7 +298,7 @@ namespace FunctionalProgramming.Apophis.Types.Monads.Option
                 public T Fold(T init, Func<T, T, T> handler)
                 {
 #if APOPHIS_CHECK
-                        OptionalExceptions.NullHandlerCheck(handler);
+                        ExceptionUtility.NullHandlerCheck(handler);
 #endif
                         return _hasValue ? handler(_value, init) : init;
                 }
@@ -282,7 +315,8 @@ namespace FunctionalProgramming.Apophis.Types.Monads.Option
                 public R Fold<R>(Func<R> ifEmpty, Func<T, R> handler)
                 {
 #if APOPHIS_CHECK
-                        OptionalExceptions.NullHandlerCheck(handler);
+                        ExceptionUtility.NullHandlerCheck(handler);
+                        ExceptionUtility.NullHandlerCheck(ifEmpty);
 #endif
                         return _hasValue ? handler(_value) : ifEmpty();
                 }
@@ -297,6 +331,9 @@ namespace FunctionalProgramming.Apophis.Types.Monads.Option
 #endif
                 public R FoldLeft<R>(R init, Func<T, R, R> handler)
                 {
+#if APOPHIS_CHECK
+                        ExceptionUtility.NullHandlerCheck(handler);
+#endif
                         return _hasValue ? handler(_value, init) : init;
                 }
 
@@ -311,7 +348,7 @@ namespace FunctionalProgramming.Apophis.Types.Monads.Option
                 public R FoldRigth<R>(R init, Func<R, T, R> handler)
                 {
 #if APOPHIS_CHECK
-                        OptionalExceptions.NullHandlerCheck(handler);
+                        ExceptionUtility.NullHandlerCheck(handler);
 #endif
                         return _hasValue ? handler(init, _value) : init;
                 }
@@ -340,7 +377,7 @@ namespace FunctionalProgramming.Apophis.Types.Monads.Option
                 public T OrElse(Func<T> factory)
                 {
 #if APOPHIS_CHECK
-                        OptionalExceptions.NullHandlerCheck(factory, "Factory function not be null");
+                        ExceptionUtility.NullHandlerCheck(factory, "Factory function not be null");
 #endif
                         return _hasValue ? _value : factory();
                 }
@@ -373,6 +410,8 @@ namespace FunctionalProgramming.Apophis.Types.Monads.Option
                         return _value;
                 }
 
+                #endregion
+
                 #region Pattern matching
 
                 /// <summary>
@@ -386,8 +425,8 @@ namespace FunctionalProgramming.Apophis.Types.Monads.Option
                 public void Match(Action<T> some, Action none)
                 {
 #if APOPHIS_CHECK
-                        OptionalExceptions.NullHandlerCheck(some, "Function for some match not be null");
-                        OptionalExceptions.NullHandlerCheck(none, "Function for none match not be null");
+                        ExceptionUtility.NullHandlerCheck(some, "Function for some match not be null");
+                        ExceptionUtility.NullHandlerCheck(none, "Function for none match not be null");
 #endif
                         if (_hasValue)
                                 some(_value);
@@ -406,8 +445,8 @@ namespace FunctionalProgramming.Apophis.Types.Monads.Option
                 public R Match<R>(Func<T, R> some, Func<R> none)
                 {
 #if APOPHIS_CHECK
-                        OptionalExceptions.NullHandlerCheck(some, "Function for some match not be null");
-                        OptionalExceptions.NullHandlerCheck(none, "Function for none match not be null");
+                        ExceptionUtility.NullHandlerCheck(some, "Function for some match not be null");
+                        ExceptionUtility.NullHandlerCheck(none, "Function for none match not be null");
 #endif
                         return _hasValue ? some(_value) : none();
                 }
@@ -423,7 +462,7 @@ namespace FunctionalProgramming.Apophis.Types.Monads.Option
                 public R Match<R>(Func<T, R> some, R none)
                 {
 #if APOPHIS_CHECK
-                        OptionalExceptions.NullHandlerCheck(some, "Function for some match not be null");
+                        ExceptionUtility.NullHandlerCheck(some, "Function for some match not be null");
 #endif
                         return _hasValue ? some(_value) : none;
                 }
@@ -434,10 +473,10 @@ namespace FunctionalProgramming.Apophis.Types.Monads.Option
 #if NET_4_6 || NET_STANDARD_2_0
         [System.Runtime.CompilerServices.MethodImpl (System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
 #endif
-                public void Match(Action<T> some)
+                public void MatchSome(Action<T> some)
                 {
 #if APOPHIS_CHECK
-                        OptionalExceptions.NullHandlerCheck(some, "Function for some match not be null");
+                        ExceptionUtility.NullHandlerCheck(some, "Function for some match not be null");
 #endif
                         if (_hasValue)
                                 some(_value);
@@ -450,18 +489,16 @@ namespace FunctionalProgramming.Apophis.Types.Monads.Option
 #if NET_4_6 || NET_STANDARD_2_0
         [System.Runtime.CompilerServices.MethodImpl (System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
 #endif
-                public void Match(Action none)
+                public void MatchNone(Action none)
                 {
 #if APOPHIS_CHECK
-                        OptionalExceptions.NullHandlerCheck(none, "Function for none match not be null");
+                        ExceptionUtility.NullHandlerCheck(none, "Function for none match not be null");
 #endif
                         if (!_hasValue)
                                 none();
                 }
 
                 #endregion
-
-                #region Equals operations
 
                 #region Option<T> equal Option<T>
 
@@ -515,112 +552,20 @@ namespace FunctionalProgramming.Apophis.Types.Monads.Option
 
                 #endregion
 
-                #region T equals Option<T>
+                #region Convert To Other
 
-#if NET_4_6 || NET_STANDARD_2_0
-        [System.Runtime.CompilerServices.MethodImpl (System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-#endif
-                public static bool operator ==(T left, Option<T> right)
+                public Either<T, R> ToLeft<R>()
                 {
-                        return right.Equals(left);
+                        return new Either<T, R>(_value);
                 }
 
-#if NET_4_6 || NET_STANDARD_2_0
-        [System.Runtime.CompilerServices.MethodImpl (System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-#endif
-                public static bool operator !=(T left, Option<T> right)
+                public Either<L, T> ToRight<L>()
                 {
-                        return !right.Equals(left);
+                        return new Either<L, T>(_value);
                 }
-
-#if NET_4_6 || NET_STANDARD_2_0
-        [System.Runtime.CompilerServices.MethodImpl (System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-#endif
-                public static bool operator <(T left, Option<T> right)
-                {
-                        return right.CompareTo(left) == 1;
-                }
-
-#if NET_4_6 || NET_STANDARD_2_0
-        [System.Runtime.CompilerServices.MethodImpl (System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-#endif
-                public static bool operator >(T left, Option<T> right)
-                {
-                        return right.CompareTo(left) == -1;
-                }
-
-#if NET_4_6 || NET_STANDARD_2_0
-        [System.Runtime.CompilerServices.MethodImpl (System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-#endif
-                public static bool operator <=(T left, Option<T> right)
-                {
-                        return right.CompareTo(left) != -1;
-                }
-
-#if NET_4_6 || NET_STANDARD_2_0
-        [System.Runtime.CompilerServices.MethodImpl (System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-#endif
-                public static bool operator >=(T left, Option<T> right)
-                {
-                        return right.CompareTo(left) != 1;
-                }
-
+                
                 #endregion
-
-                #region Option<T> equals T
-
-#if NET_4_6 || NET_STANDARD_2_0
-        [System.Runtime.CompilerServices.MethodImpl (System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-#endif
-                public static bool operator ==(Option<T> left, T right)
-                {
-                        return left.Equals(right);
-                }
-
-#if NET_4_6 || NET_STANDARD_2_0
-        [System.Runtime.CompilerServices.MethodImpl (System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-#endif
-                public static bool operator !=(Option<T> left, T right)
-                {
-                        return !left.Equals(right);
-                }
-
-#if NET_4_6 || NET_STANDARD_2_0
-        [System.Runtime.CompilerServices.MethodImpl (System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-#endif
-                public static bool operator <(Option<T> left, T right)
-                {
-                        return left.CompareTo(right) == -1;
-                }
-
-#if NET_4_6 || NET_STANDARD_2_0
-        [System.Runtime.CompilerServices.MethodImpl (System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-#endif
-                public static bool operator >(Option<T> left, T right)
-                {
-                        return left.CompareTo(right) == 1;
-                }
-
-#if NET_4_6 || NET_STANDARD_2_0
-        [System.Runtime.CompilerServices.MethodImpl (System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-#endif
-                public static bool operator <=(Option<T> left, T right)
-                {
-                        return left.CompareTo(right) != 1;
-                }
-
-#if NET_4_6 || NET_STANDARD_2_0
-        [System.Runtime.CompilerServices.MethodImpl (System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-#endif
-                public static bool operator >=(Option<T> left, T right)
-                {
-                        return left.CompareTo(right) != -1;
-                }
-
-                #endregion
-
-                #endregion
-
+                
                 private static Option<R> EmptyOption<R>() { return new Option<R>(); }
 }
 

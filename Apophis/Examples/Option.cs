@@ -1,6 +1,8 @@
-using FunctionalProgramming.Apophis.Types.Monads.Option;
+using Apophis.Types.Extensions;
+using Apophis.Types.Monads.Option;
+using FunctionalProgramming.Apophis.Types.Extensions;
 
-namespace FunctionalProgramming.Apophis.Examples
+namespace Apophis.Examples
 {
     public class Option
     {
@@ -33,8 +35,8 @@ namespace FunctionalProgramming.Apophis.Examples
                 none: () => "Option is empty".Print()
             );
 
-            none.Match(() => "Empty".Print()); // print Empty
-            none.Match(s => $"Has {s}".Print()); // not print
+            none.MatchNone(() => "Empty".Print()); // print Empty
+            none.MatchSome(s => $"Has {s}".Print()); // not print
 
             string returnMath = none.Match(
                 s => s, 
