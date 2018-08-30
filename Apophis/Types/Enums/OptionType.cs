@@ -1,4 +1,4 @@
-namespace Apophis.Types.EnumTypes
+namespace Apophis.Types.Enums
 {
     public enum OptionType : byte
     {

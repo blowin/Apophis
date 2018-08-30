@@ -13,6 +13,14 @@ namespace Apophis.Types.Extensions
         {
             return new Either<L, R>(obj);
         }
+        
+        public static Either<L, R> Merge<Ret, L, R>(this Either<L, R> eith, out Ret val)
+            where L : Ret
+            where R : Ret
+        {
+            val = eith.IsLeft ? (Ret) eith.LeftOrDefault() : eith.RightOrDefault();
+            return eith;
+        }
 
         public static Either<L, R> Flatten<L, R>(this Either<Either<L, R>, R> obj)
         {

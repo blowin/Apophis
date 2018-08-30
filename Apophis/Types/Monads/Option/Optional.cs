@@ -4,7 +4,8 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using Apophis.Types.EnumTypes;
+using Apophis.Types.Core;
+using Apophis.Types.Enums;
 using Apophis.Types.Exceptions;
 using Apophis.Types.Extensions;
 using Apophis.Types.Milxn;
@@ -173,7 +174,7 @@ namespace Apophis.Types.Monads.Option
                 }
 
 #if NET_4_6 || NET_STANDARD_2_0
-        [System.Runtime.CompilerServices.MethodImpl (System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+                [System.Runtime.CompilerServices.MethodImpl (System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
 #endif
                 public static explicit operator bool(Option<T> opt)
                 {
@@ -191,9 +192,8 @@ namespace Apophis.Types.Monads.Option
                 /// </summary>
                 /// <param name="handler">Applying func</param>
                 /// <typeparam name="R">Return type</typeparam>
-                /// <returns></returns>
 #if NET_4_6 || NET_STANDARD_2_0
-        [System.Runtime.CompilerServices.MethodImpl (System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+                [System.Runtime.CompilerServices.MethodImpl (System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
 #endif
                 public Option<R> FlatMap<R>(Func<T, Option<R>> handler)
                 {
@@ -210,7 +210,7 @@ namespace Apophis.Types.Monads.Option
                 /// <typeparam name="R">New hold option type</typeparam>
                 /// <returns>Return none if empty. Otherwise return new option for value return from handler</returns>
 #if NET_4_6 || NET_STANDARD_2_0
-        [System.Runtime.CompilerServices.MethodImpl (System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+                [System.Runtime.CompilerServices.MethodImpl (System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
 #endif
                 public Option<R> Map<R>(Func<T, R> handler)
                 {
@@ -224,66 +224,66 @@ namespace Apophis.Types.Monads.Option
                 /// Returns this Option if it is nonempty and applying the predicate to
                 /// this Option value returns true. Otherwise, return None.
                 /// </summary>
-                /// <param name="predicat">Predicat for testing</param>
+                /// <param name="predicate">Predicate for testing</param>
 #if NET_4_6 || NET_STANDARD_2_0
-        [System.Runtime.CompilerServices.MethodImpl (System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+                [System.Runtime.CompilerServices.MethodImpl (System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
 #endif
-                public Option<T> Filter(Func<T, bool> predicat)
+                public Option<T> Filter(Func<T, bool> predicate)
                 {
 #if APOPHIS_CHECK
-                        ExceptionUtility.NullPredicatCheck(predicat);
+                        ExceptionUtility.NullPredicatCheck(predicate);
 #endif
-                        return _hasValue && predicat(_value) ? this : EmptyOption<T>();
+                        return _hasValue && predicate(_value) ? this : EmptyOption<T>();
                 }
 
                 /// <summary>
                 /// Returns this Option if it is nonempty and applying the predicate to
                 /// this Option value returns false. Otherwise, return None.
                 /// </summary>
-                /// <param name="predicat">Predicat for testing</param>
+                /// <param name="predicate">Predicate for testing</param>
                 /// <returns></returns>
 #if NET_4_6 || NET_STANDARD_2_0
-        [System.Runtime.CompilerServices.MethodImpl (System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+                [System.Runtime.CompilerServices.MethodImpl (System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
 #endif
-                public Option<T> FilterNot(Func<T, bool> predicat)
+                public Option<T> FilterNot(Func<T, bool> predicate)
                 {
 #if APOPHIS_CHECK
-                        ExceptionUtility.NullPredicatCheck(predicat);
+                        ExceptionUtility.NullPredicatCheck(predicate);
 #endif
-                        return _hasValue && !predicat(_value) ? this : EmptyOption<T>();
+                        return _hasValue && !predicate(_value) ? this : EmptyOption<T>();
                 }
 
                 /// <summary>
-                /// Returns true if this option is nonempty and the predicate
-                /// predicat returns true when applied to this Option's value.
+                /// Returns true if this option is nonempty and the
+                /// predicate returns true when applied to this Option's value.
                 /// Otherwise, returns false.
                 /// </summary>
-                /// <param name="predicat">Predicat for testing</param>
+                /// <param name="predicate">Predicate for testing</param>
 #if NET_4_6 || NET_STANDARD_2_0
-        [System.Runtime.CompilerServices.MethodImpl (System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+                [System.Runtime.CompilerServices.MethodImpl (System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
 #endif
-                public bool Exist(Func<T, bool> predicat)
+                public bool Exist(Func<T, bool> predicate)
                 {
 #if APOPHIS_CHECK
-                        ExceptionUtility.NullPredicatCheck(predicat);
+                        ExceptionUtility.NullPredicatCheck(predicate);
 #endif
-                        return _hasValue && predicat(_value);
+                        return _hasValue && predicate(_value);
                 }
 
                 /// <summary>
-                /// Returns true if this option is empty or the predicate
-                /// predicat returns true when applied to this $option's value.
+                /// Returns true if this option is empty or the
+                /// predicate returns true when applied to this $option's value.
                 /// </summary>
-                /// <param name="predicat">Predicat for testing</param>
+                /// <param name="predicate">Predicate for testing</param>
 #if NET_4_6 || NET_STANDARD_2_0
-        [System.Runtime.CompilerServices.MethodImpl (System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+                [System.Runtime.CompilerServices.MethodImpl (System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
 #endif
-                public bool Forall(Func<T, bool> predicat)
+                public bool Forall(Func<T, bool> predicate)
                 {
 #if APOPHIS_CHECK
-                        ExceptionUtility.NullPredicatCheck(predicat);
+                        ExceptionUtility.NullPredicatCheck(predicate);
 #endif
-                        return !_hasValue || predicat(_value);
+                        return !_hasValue || predicate(_value);
                 }
 
                 /// <summary>
@@ -293,7 +293,7 @@ namespace Apophis.Types.Monads.Option
                 /// <param name="init">Initial value</param>
                 /// <param name="handler">Function for applying, if option nonempty</param>
 #if NET_4_6 || NET_STANDARD_2_0
-        [System.Runtime.CompilerServices.MethodImpl (System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+                [System.Runtime.CompilerServices.MethodImpl (System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
 #endif
                 public T Fold(T init, Func<T, T, T> handler)
                 {
@@ -310,7 +310,7 @@ namespace Apophis.Types.Monads.Option
                 /// <param name="ifEmpty">the expression to evaluate if empty.</param>
                 /// <param name="handler">the function to apply if nonempty.</param>
 #if NET_4_6 || NET_STANDARD_2_0
-        [System.Runtime.CompilerServices.MethodImpl (System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+                [System.Runtime.CompilerServices.MethodImpl (System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
 #endif
                 public R Fold<R>(Func<R> ifEmpty, Func<T, R> handler)
                 {
@@ -327,7 +327,7 @@ namespace Apophis.Types.Monads.Option
                 /// <param name="init">Initial value</param>
                 /// <param name="handler">Applying function if nonempty</param>
 #if NET_4_6 || NET_STANDARD_2_0
-        [System.Runtime.CompilerServices.MethodImpl (System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+                [System.Runtime.CompilerServices.MethodImpl (System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
 #endif
                 public R FoldLeft<R>(R init, Func<T, R, R> handler)
                 {
@@ -343,7 +343,7 @@ namespace Apophis.Types.Monads.Option
                 /// <param name="init">Initial value</param>
                 /// <param name="handler">Applying function if nonempty</param>
 #if NET_4_6 || NET_STANDARD_2_0
-        [System.Runtime.CompilerServices.MethodImpl (System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+                [System.Runtime.CompilerServices.MethodImpl (System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
 #endif
                 public R FoldRigth<R>(R init, Func<R, T, R> handler)
                 {
@@ -359,7 +359,7 @@ namespace Apophis.Types.Monads.Option
                 /// </summary>
                 /// <param name="value">Return if option is empty</param>
 #if NET_4_6 || NET_STANDARD_2_0
-        [System.Runtime.CompilerServices.MethodImpl (System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+                [System.Runtime.CompilerServices.MethodImpl (System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
 #endif
                 public T OrElse(T value)
                 {
@@ -372,7 +372,7 @@ namespace Apophis.Types.Monads.Option
                 /// </summary>
                 /// <param name="factory">Run factory and return value if option is empty</param>
 #if NET_4_6 || NET_STANDARD_2_0
-        [System.Runtime.CompilerServices.MethodImpl (System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+                [System.Runtime.CompilerServices.MethodImpl (System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
 #endif
                 public T OrElse(Func<T> factory)
                 {
@@ -388,7 +388,7 @@ namespace Apophis.Types.Monads.Option
                 /// </summary>
                 /// <returns>May return null</returns>
 #if NET_4_6 || NET_STANDARD_2_0
-        [System.Runtime.CompilerServices.MethodImpl (System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+                [System.Runtime.CompilerServices.MethodImpl (System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
 #endif
                 public T OrDefault()
                 {
@@ -400,7 +400,7 @@ namespace Apophis.Types.Monads.Option
                 /// throw 'OptionalNotFoundValue' exception.
                 /// </summary>
 #if NET_4_6 || NET_STANDARD_2_0
-        [System.Runtime.CompilerServices.MethodImpl (System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+                [System.Runtime.CompilerServices.MethodImpl (System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
 #endif
                 public T OrThrow()
                 {
@@ -420,9 +420,9 @@ namespace Apophis.Types.Monads.Option
                 /// <param name="some">Function if nonempty</param>
                 /// <param name="none">Function if empty</param>
 #if NET_4_6 || NET_STANDARD_2_0
-        [System.Runtime.CompilerServices.MethodImpl (System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+                [System.Runtime.CompilerServices.MethodImpl (System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
 #endif
-                public void Match(Action<T> some, Action none)
+                public Unit Match(Action<T> some, Action none)
                 {
 #if APOPHIS_CHECK
                         ExceptionUtility.NullHandlerCheck(some, "Function for some match not be null");
@@ -432,6 +432,8 @@ namespace Apophis.Types.Monads.Option
                                 some(_value);
                         else
                                 none();
+                        
+                        return Unit.Def;
                 }
 
                 /// <summary>
@@ -440,7 +442,7 @@ namespace Apophis.Types.Monads.Option
                 /// <param name="some">Function if nonempty</param>
                 /// <param name="none">Function if empty</param>
 #if NET_4_6 || NET_STANDARD_2_0
-        [System.Runtime.CompilerServices.MethodImpl (System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+                [System.Runtime.CompilerServices.MethodImpl (System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
 #endif
                 public R Match<R>(Func<T, R> some, Func<R> none)
                 {
@@ -457,7 +459,7 @@ namespace Apophis.Types.Monads.Option
                 /// <param name="some">Function if nonempty</param>
                 /// <param name="none">Function if empty</param>
 #if NET_4_6 || NET_STANDARD_2_0
-        [System.Runtime.CompilerServices.MethodImpl (System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+                [System.Runtime.CompilerServices.MethodImpl (System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
 #endif
                 public R Match<R>(Func<T, R> some, R none)
                 {
@@ -471,15 +473,17 @@ namespace Apophis.Types.Monads.Option
                 /// Math for some value, if empty, function not be call
                 /// </summary>
 #if NET_4_6 || NET_STANDARD_2_0
-        [System.Runtime.CompilerServices.MethodImpl (System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+                [System.Runtime.CompilerServices.MethodImpl (System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
 #endif
-                public void MatchSome(Action<T> some)
+                public Unit MatchSome(Action<T> some)
                 {
 #if APOPHIS_CHECK
                         ExceptionUtility.NullHandlerCheck(some, "Function for some match not be null");
 #endif
                         if (_hasValue)
                                 some(_value);
+                    
+                    return Unit.Def;
                 }
 
                 /// <summary>
@@ -487,15 +491,17 @@ namespace Apophis.Types.Monads.Option
                 /// </summary>
                 /// <param name="none"></param>
 #if NET_4_6 || NET_STANDARD_2_0
-        [System.Runtime.CompilerServices.MethodImpl (System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+                [System.Runtime.CompilerServices.MethodImpl (System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
 #endif
-                public void MatchNone(Action none)
+                public Unit MatchNone(Action none)
                 {
 #if APOPHIS_CHECK
                         ExceptionUtility.NullHandlerCheck(none, "Function for none match not be null");
 #endif
                         if (!_hasValue)
                                 none();
+                    
+                    return Unit.Def;
                 }
 
                 #endregion
@@ -567,12 +573,12 @@ namespace Apophis.Types.Monads.Option
                 #endregion
                 
                 private static Option<R> EmptyOption<R>() { return new Option<R>(); }
-}
+        }
 
         public static class Optional
         {
-                public static Option<T> Some<T>(T val){ return new Option<T>(val); }
-
+                public static Option<T> Some<T>(T val) { return new Option<T>(val); }
+                
                 public static Option<T> None<T>() { return new Option<T>(); }
         }
 }

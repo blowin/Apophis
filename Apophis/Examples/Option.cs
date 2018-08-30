@@ -1,6 +1,5 @@
 using Apophis.Types.Extensions;
 using Apophis.Types.Monads.Option;
-using FunctionalProgramming.Apophis.Types.Extensions;
 
 namespace Apophis.Examples
 {
