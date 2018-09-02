@@ -54,21 +54,21 @@ namespace Apophis.Types.Monads.Either
             }
         }
 
-        public Option<TLeft, SafePolicy> Left
+        public Option<TLeft, TCheckPolicy> Left
         {
             [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
             get
             {
-                return _hasLeft ? _left.ToSafeOption() : Optional.None<TLeft, SafePolicy>();
+                return _hasLeft ? _left.ToOption<TLeft, TCheckPolicy>() : Optional.None<TLeft, TCheckPolicy>();
             }
         }
         
-        public Option<TRight, SafePolicy> Right
+        public Option<TRight, TCheckPolicy> Right
         {
             [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
             get
             {
-                return _hasLeft == false ? _right.ToSafeOption() : Optional.None<TRight, SafePolicy>();
+                return _hasLeft == false ? _right.ToOption<TRight, TCheckPolicy>() : Optional.None<TRight, TCheckPolicy>();
             }
         }
         
@@ -509,12 +509,12 @@ namespace Apophis.Types.Monads.Either
         /// </summary>
         /// <param name="predicate">Predicate for testing</param>
         [System.Runtime.CompilerServices.MethodImpl (System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public Option<TLeft, SafePolicy> FilterLeft(Func<TLeft, bool> predicate)
+        public Option<TLeft, TCheckPolicy> FilterLeft(Func<TLeft, bool> predicate)
         {
             if(default(TCheckPolicy).NeedCheck)
                 ExceptionUtility.NullPredicatCheck(predicate);
 
-            return _hasLeft && predicate(_left) ? _left.ToSafeOption() : Optional.None<TLeft, SafePolicy>();
+            return _hasLeft && predicate(_left) ? _left.ToOption<TLeft, TCheckPolicy>() : Optional.None<TLeft, TCheckPolicy>();
         }
 
         /// <summary>
@@ -523,12 +523,12 @@ namespace Apophis.Types.Monads.Either
         /// </summary>
         /// <param name="predicate">Predicate for testing</param>
         [System.Runtime.CompilerServices.MethodImpl (System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public Option<TRight, SafePolicy> FilterRight(Func<TRight, bool> predicate)
+        public Option<TRight, TCheckPolicy> FilterRight(Func<TRight, bool> predicate)
         {
             if(default(TCheckPolicy).NeedCheck)
                 ExceptionUtility.NullPredicatCheck(predicate);
             
-            return !_hasLeft && predicate(_right) ? _right.ToSafeOption() : Optional.None<TRight, SafePolicy>();
+            return !_hasLeft && predicate(_right) ? _right.ToOption<TRight, TCheckPolicy>(): Optional.None<TRight, TCheckPolicy>();
         }
         
         /// <summary>
@@ -537,7 +537,7 @@ namespace Apophis.Types.Monads.Either
         /// </summary>
         /// <param name="predicateLeft">Predicate for left branch testing</param>
         /// <param name="predicateRight">Predicate for right branch testing</param>
-        public Option<Either<TLeft, TRight, TCheckPolicy>, SafePolicy> Filter(Func<TLeft, bool> predicateLeft, Func<TRight, bool> predicateRight)
+        public Option<Either<TLeft, TRight, TCheckPolicy>, TCheckPolicy> Filter(Func<TLeft, bool> predicateLeft, Func<TRight, bool> predicateRight)
         {
             if(default(TCheckPolicy).NeedCheck)
             {
@@ -548,14 +548,14 @@ namespace Apophis.Types.Monads.Either
             if (_hasLeft)
             {
                 if (predicateLeft(_left))
-                    return this.ToSafeOption();
+                    return this.ToOption<Either<TLeft, TRight, TCheckPolicy>, TCheckPolicy>();
             }
             else if (predicateRight(_right))
             {
-                return this.ToSafeOption();
+                return this.ToOption<Either<TLeft, TRight, TCheckPolicy>, TCheckPolicy>();
             }
             
-            return Optional.None<Either<TLeft, TRight, TCheckPolicy>, SafePolicy>();
+            return Optional.None<Either<TLeft, TRight, TCheckPolicy>, TCheckPolicy>();
         }
 
         /// <summary>
