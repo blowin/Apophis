@@ -1,6 +1,3 @@
-// #define APOPHIS_CHECK
-// #define NET_4_6
-
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -9,19 +6,21 @@ using Apophis.Types.Core;
 using Apophis.Types.Enums;
 using Apophis.Types.Exceptions;
 using Apophis.Types.Extensions;
-using Apophis.Types.Milxn;
+using Apophis.Types.Mixin;
 using Apophis.Types.Monads.Option;
+using Apophis.Types.Policys.Check;
 
 namespace Apophis.Types.Monads.Either
 {
     [Serializable]
     [StructLayout(LayoutKind.Auto)]
-    public struct Either<TLeft, TRight> : 
-        IEquatable<Either<TLeft, TRight>>,
-        IComparable<Either<TLeft, TRight>>,
+    public struct Either<TLeft, TRight, TCheckPolicy> : 
+        IEquatable<Either<TLeft, TRight, TCheckPolicy>>,
+        IComparable<Either<TLeft, TRight, TCheckPolicy>>,
         IComparable,
-        IEnumerable<Either<TLeft, TRight>>,
+        IEnumerable<Either<TLeft, TRight, TCheckPolicy>>,
         ITypeClass<EitherType>
+        where TCheckPolicy : struct, ICheckPolicy
     {
         private TLeft _left;
         private TRight _right;
@@ -30,39 +29,61 @@ namespace Apophis.Types.Monads.Either
 
         public EitherType Type
         {
-            get { return _hasLeft ? EitherType.Left : EitherType.Right; }
+            [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+            get
+            {
+                return _hasLeft ? EitherType.Left : EitherType.Right;
+            }
         }
 
         public bool IsLeft
         {
-            get { return _hasLeft; }
+            [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+            get
+            {
+                return _hasLeft;
+            }
         }
 
         public bool IsRight
         {
-            get { return _hasLeft == false; }
-        }
-
-        public Option<TLeft> Left
-        {
-            get { return _hasLeft ? _left.ToOption() : Optional.None<TLeft>(); }
-        }
-        
-        public Option<TRight> Right
-        {
-            get { return _hasLeft == false ? _right.ToOption() : Optional.None<TRight>(); }
-        }
-        
-        public Either<TRight, TLeft> Swap
-        {
+            [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
             get
             {
-                return new Either<TRight, TLeft>(_right, _left, !_hasLeft);
+                return _hasLeft == false;
+            }
+        }
+
+        public Option<TLeft, SafePolicy> Left
+        {
+            [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+            get
+            {
+                return _hasLeft ? _left.ToSafeOption() : Optional.None<TLeft, SafePolicy>();
+            }
+        }
+        
+        public Option<TRight, SafePolicy> Right
+        {
+            [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+            get
+            {
+                return _hasLeft == false ? _right.ToSafeOption() : Optional.None<TRight, SafePolicy>();
+            }
+        }
+        
+        public Either<TRight, TLeft, TCheckPolicy> Swap
+        {
+            [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+            get
+            {
+                return new Either<TRight, TLeft, TCheckPolicy>(_right, _left, !_hasLeft);
             }
         }
         
         #region Constructors
         
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public Either(TLeft left)
         {
             ExceptionUtility.ThrowIfTrue<EitherExceptions.EitherNullRef>(left == null);
@@ -72,6 +93,7 @@ namespace Apophis.Types.Monads.Either
             _hasLeft = true;
         }
 
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public Either(TRight right)
         {
             ExceptionUtility.ThrowIfTrue<EitherExceptions.EitherNullRef>(right == null);
@@ -81,39 +103,17 @@ namespace Apophis.Types.Monads.Either
             _hasLeft = false;
         }
         
-        public Either(Either<TLeft, TRight> other)
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        private Either(Either<TLeft, TRight, TCheckPolicy> oth)
         {
-            _right = other._right;
-            _left = other._left;
-            _hasLeft = other._hasLeft;
-        }
-
-        public Either(Either<Either<TLeft, TRight>, TRight> other)
-        {
-            _right = other._right;
-            _left = other._left._left;
-            _hasLeft = other._hasLeft;
+            _left = oth._left;
+            _right = oth._right;
+            _hasLeft = oth._hasLeft;
         }
         
-        public Either(Either<TLeft, Either<TLeft, TRight>> other)
-        {
-            _right = other._right._right;
-            _left = other._left;
-            _hasLeft = other._hasLeft;
-        }
-        
-        public Either(Either<Either<TLeft, TRight>, Either<TLeft, TRight>> other)
-        {
-            _right = other._right._right;
-            _left = other._left._left;
-            _hasLeft = other._hasLeft;
-        }
-        
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         private Either(TLeft left, TRight right, bool hasLeft)
         {
-            ExceptionUtility.ThrowIfTrue<EitherExceptions.EitherNullRef>(left == null);
-            ExceptionUtility.ThrowIfTrue<EitherExceptions.EitherNullRef>(right == null);
-            
             _left = left;
             _right = right;
             _hasLeft = hasLeft;
@@ -121,10 +121,8 @@ namespace Apophis.Types.Monads.Either
 
         #endregion
 
-        public override int GetHashCode()
-        {
-            return _hasLeft ? _left.GetHashCode() : _right.GetHashCode();
-        }
+        [System.Runtime.CompilerServices.MethodImpl (System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public override int GetHashCode() => _hasLeft ? _left.GetHashCode() : _right.GetHashCode();
 
         #region Equals
 
@@ -133,11 +131,11 @@ namespace Apophis.Types.Monads.Either
             if (obj == null)
                 return false;
             
-            if (obj is Either<TLeft, TRight>)
-                return Equals((Either<TLeft, TRight>) obj);
+            if (obj is Either<TLeft, TRight, TCheckPolicy>)
+                return Equals((Either<TLeft, TRight, TCheckPolicy>) obj);
             
-            if (obj is Either<TRight, TLeft>)
-                return Equals(((Either<TRight, TLeft>) obj).Swap);
+            if (obj is Either<TRight, TLeft, TCheckPolicy>)
+                return Equals(((Either<TRight, TLeft, TCheckPolicy>) obj).Swap);
 
             if (_hasLeft && obj is TLeft)
                 return _left.Equals((TLeft) obj);
@@ -148,7 +146,7 @@ namespace Apophis.Types.Monads.Either
             return false;
         }
         
-        public bool Equals(Either<TLeft, TRight> other)
+        public bool Equals(Either<TLeft, TRight, TCheckPolicy> other)
         {
             if (_hasLeft)
                 return other._hasLeft && _left.Equals(other._left);
@@ -156,7 +154,7 @@ namespace Apophis.Types.Monads.Either
             return !other._hasLeft && _right.Equals(other._right);
         }
 
-        public bool Equals(Either<TRight, TLeft> other)
+        public bool Equals(Either<TRight, TLeft, TCheckPolicy> other)
         {
             if (_hasLeft)
                 return !other._hasLeft && _left.Equals(other._right);
@@ -168,7 +166,7 @@ namespace Apophis.Types.Monads.Either
 
         #region CompareTo
 
-        public int CompareTo(Either<TLeft, TRight> other)
+        public int CompareTo(Either<TLeft, TRight, TCheckPolicy> other)
         {
             if (_hasLeft)
                 return other._hasLeft ? Comparer<TLeft>.Default.Compare(_left, other._left) : 1;
@@ -181,11 +179,11 @@ namespace Apophis.Types.Monads.Either
             if (obj == null)
                 return 1;
             
-            if (obj is Either<TLeft, TRight>)
-                return CompareTo((Either<TLeft, TRight>) obj);
+            if (obj is Either<TLeft, TRight, TCheckPolicy>)
+                return CompareTo((Either<TLeft, TRight, TCheckPolicy>) obj);
 
-            if (obj is Either<TRight, TLeft>)
-                return CompareTo(((Either<TRight, TLeft>) obj).Swap);
+            if (obj is Either<TRight, TLeft, TCheckPolicy>)
+                return CompareTo(((Either<TRight, TLeft, TCheckPolicy>) obj).Swap);
 
             if (_hasLeft && obj is TLeft)
                 return Comparer<TLeft>.Default.Compare(_left, (TLeft) obj);
@@ -200,53 +198,29 @@ namespace Apophis.Types.Monads.Either
 
         #region Equality operators
 
-#if NET_4_6 || NET_STANDARD_2_0
         [System.Runtime.CompilerServices.MethodImpl (System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-#endif
-        public static bool operator ==(Either<TLeft, TRight> left, Either<TLeft, TRight> right)
-        {
-            return left.Equals(right);
-        }
+        public static bool operator ==(Either<TLeft, TRight, TCheckPolicy> left, Either<TLeft, TRight, TCheckPolicy> right) 
+            => left.Equals(right);
 
-#if NET_4_6 || NET_STANDARD_2_0
         [System.Runtime.CompilerServices.MethodImpl (System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-#endif
-        public static bool operator !=(Either<TLeft, TRight> left, Either<TLeft, TRight> right)
-        {
-            return !left.Equals(right);
-        }
+        public static bool operator !=(Either<TLeft, TRight, TCheckPolicy> left, Either<TLeft, TRight, TCheckPolicy> right)
+            => !left.Equals(right);
 
-#if NET_4_6 || NET_STANDARD_2_0
         [System.Runtime.CompilerServices.MethodImpl (System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-#endif
-        public static bool operator <(Either<TLeft, TRight> left, Either<TLeft, TRight> right)
-        {
-            return left.CompareTo(right) == -1;
-        }
+        public static bool operator <(Either<TLeft, TRight, TCheckPolicy> left, Either<TLeft, TRight, TCheckPolicy> right)
+         => left.CompareTo(right) == -1;
 
-#if NET_4_6 || NET_STANDARD_2_0
         [System.Runtime.CompilerServices.MethodImpl (System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-#endif
-        public static bool operator >(Either<TLeft, TRight> left, Either<TLeft, TRight> right)
-        {
-            return left.CompareTo(right) == 1;
-        }
+        public static bool operator >(Either<TLeft, TRight, TCheckPolicy> left, Either<TLeft, TRight, TCheckPolicy> right)
+         => left.CompareTo(right) == 1;
 
-#if NET_4_6 || NET_STANDARD_2_0
         [System.Runtime.CompilerServices.MethodImpl (System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-#endif
-        public static bool operator <=(Either<TLeft, TRight> left, Either<TLeft, TRight> right)
-        {
-            return left.CompareTo(right) != 1;
-        }
+        public static bool operator <=(Either<TLeft, TRight, TCheckPolicy> left, Either<TLeft, TRight, TCheckPolicy> right)
+         => left.CompareTo(right) != 1;
 
-#if NET_4_6 || NET_STANDARD_2_0
         [System.Runtime.CompilerServices.MethodImpl (System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-#endif
-        public static bool operator >=(Either<TLeft, TRight> left, Either<TLeft, TRight> right)
-        {
-            return left.CompareTo(right) != -1;
-        }
+        public static bool operator >=(Either<TLeft, TRight, TCheckPolicy> left, Either<TLeft, TRight, TCheckPolicy> right)
+         => left.CompareTo(right) != -1;
 
         #endregion
 
@@ -258,14 +232,12 @@ namespace Apophis.Types.Monads.Either
         /// </summary>
         /// <param name="init">Initial value</param>
         /// <param name="left">Function for applying, if either has Left</param>
-#if NET_4_6 || NET_STANDARD_2_0
         [System.Runtime.CompilerServices.MethodImpl (System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-#endif
         public R FoldLeft<R>(R init, Func<TLeft, R, R> left)
         {
-#if APOPHIS_CHECK
-            ExceptionUtility.NullHandlerCheck(left);
-#endif
+            if(default(TCheckPolicy).NeedCheck)
+                ExceptionUtility.NullHandlerCheck(left);
+
             return _hasLeft ? left(_left, init) : init;
         }
 
@@ -275,14 +247,12 @@ namespace Apophis.Types.Monads.Either
         /// </summary>
         /// <param name="init">Initial value</param>
         /// <param name="right">Function for applying, if either has Right</param>
-#if NET_4_6 || NET_STANDARD_2_0
         [System.Runtime.CompilerServices.MethodImpl (System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-#endif
         public R FoldRight<R>(R init, Func<TRight, R, R> right)
         {
-#if APOPHIS_CHECK
-            ExceptionUtility.NullHandlerCheck(right);
-#endif
+            if(default(TCheckPolicy).NeedCheck)
+                ExceptionUtility.NullHandlerCheck(right);
+
             return _hasLeft == false ? right(_right, init) : init;
         }
 
@@ -294,15 +264,15 @@ namespace Apophis.Types.Monads.Either
         /// <param name="init">Initial value</param>
         /// <param name="left">Function for applying, if either has Left</param>
         /// <param name="right">Function for applying, if either has Right</param>
-#if NET_4_6 || NET_STANDARD_2_0
         [System.Runtime.CompilerServices.MethodImpl (System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-#endif
         public R Fold<R>(R init, Func<TLeft, R, R> left, Func<TRight, R, R> right)
         {
-#if APOPHIS_CHECK
-            ExceptionUtility.NullHandlerCheck(left);
-            ExceptionUtility.NullHandlerCheck(right);
-#endif
+            if (default(TCheckPolicy).NeedCheck)
+            {
+                ExceptionUtility.NullHandlerCheck(left);
+                ExceptionUtility.NullHandlerCheck(right);
+            }
+
             return _hasLeft ? left(_left, init) : right(_right, init);
         }
         
@@ -315,15 +285,14 @@ namespace Apophis.Types.Monads.Either
         /// </summary>
         /// <param name="left">Applying func</param>
         /// <typeparam name="R">New left type</typeparam>
-#if NET_4_6 || NET_STANDARD_2_0
         [System.Runtime.CompilerServices.MethodImpl (System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-#endif
-        public Either<R, TRight> FlatMapLeft<R>(Func<TLeft, Either<R, TRight>> left)
+        public Either<R, TRight, TOthCheckPolicy> FlatMapLeft<R, TOthCheckPolicy>(Func<TLeft, Either<R, TRight, TOthCheckPolicy>> left)
+            where TOthCheckPolicy : struct, ICheckPolicy
         {
-#if APOPHIS_CHECK
-            ExceptionUtility.NullHandlerCheck(left);
-#endif
-            return _hasLeft ? left(_left) : new Either<R, TRight>(default(R), _right, _hasLeft);
+            if(default(TCheckPolicy).NeedCheck)
+                ExceptionUtility.NullHandlerCheck(left);
+
+            return _hasLeft ? left(_left) : new Either<R, TRight, TOthCheckPolicy>(default(R), _right, _hasLeft);
         } 
 
         /// <summary>
@@ -335,15 +304,14 @@ namespace Apophis.Types.Monads.Either
         /// </summary>
         /// <param name="right">Applying func</param>
         /// <typeparam name="R">New right type</typeparam>
-#if NET_4_6 || NET_STANDARD_2_0
         [System.Runtime.CompilerServices.MethodImpl (System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-#endif
-        public Either<TLeft, R> FlatMapRight<R>(Func<TRight, Either<TLeft, R>> right)
+        public Either<TLeft, R, TOthCheckPolicy> FlatMapRight<R, TOthCheckPolicy>(Func<TRight, Either<TLeft, R, TOthCheckPolicy>> right)
+            where TOthCheckPolicy : struct, ICheckPolicy
         {
-#if APOPHIS_CHECK
-            ExceptionUtility.NullHandlerCheck(right);
-#endif
-            return _hasLeft == false ? right(_right) : new Either<TLeft, R>(_left, default(R), _hasLeft);
+            if(default(TCheckPolicy).NeedCheck)
+                ExceptionUtility.NullHandlerCheck(right);
+
+            return _hasLeft == false ? right(_right) : new Either<TLeft, R, TOthCheckPolicy>(_left, default(R), _hasLeft);
         } 
 
         /// <summary>
@@ -356,15 +324,16 @@ namespace Apophis.Types.Monads.Either
         /// <param name="right">Applying func for right branch</param>
         /// <typeparam name="L">New left type</typeparam>
         /// <typeparam name="R">New right type</typeparam>
-#if NET_4_6 || NET_STANDARD_2_0
         [System.Runtime.CompilerServices.MethodImpl (System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-#endif
-        public Either<L, R> FlatMap<L, R>(Func<TLeft, Either<L, R>> left, Func<TRight, Either<L, R>> right)
+        public Either<L, R, TOthCheckPolicy> FlatMap<L, R, TOthCheckPolicy>(Func<TLeft, Either<L, R, TOthCheckPolicy>> left, Func<TRight, Either<L, R, TOthCheckPolicy>> right)
+            where TOthCheckPolicy : struct, ICheckPolicy
         {
-#if APOPHIS_CHECK
-            ExceptionUtility.NullHandlerCheck(left);
-            ExceptionUtility.NullHandlerCheck(right);
-#endif
+            if (default(TCheckPolicy).NeedCheck)
+            {
+                ExceptionUtility.NullHandlerCheck(left);
+                ExceptionUtility.NullHandlerCheck(right);
+            }
+
             return _hasLeft ? left(_left) : right(_right);
         }
         
@@ -374,17 +343,15 @@ namespace Apophis.Types.Monads.Either
         /// <param name="handler">Function for applying</param>
         /// <typeparam name="L">New hold left type</typeparam>
         /// <returns>Return right if has right branch.</returns>
-#if NET_4_6 || NET_STANDARD_2_0
         [System.Runtime.CompilerServices.MethodImpl (System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-#endif
-        public Either<L, TRight> MapLeft<L>(Func<TLeft, L> handler)
+        public Either<L, TRight, TCheckPolicy> MapLeft<L>(Func<TLeft, L> handler)
         {
-#if APOPHIS_CHECK
-            ExceptionUtility.NullHandlerCheck(handler);
-#endif
+            if(default(TCheckPolicy).NeedCheck)
+                ExceptionUtility.NullHandlerCheck(handler);
+
             return _hasLeft ? 
-                handler(_left).ToLeft<L, TRight>() : 
-                new Either<L, TRight>(default(L), _right, _hasLeft);
+                handler(_left).ToLeft<L, TRight, TCheckPolicy>() : 
+                new Either<L, TRight, TCheckPolicy>(default(L), _right, _hasLeft);
         }
 
         /// <summary>
@@ -393,17 +360,15 @@ namespace Apophis.Types.Monads.Either
         /// <param name="handler">Function for applying</param>
         /// <typeparam name="R">New hold right type</typeparam>
         /// <returns>Return right if has left branch.</returns>
-#if NET_4_6 || NET_STANDARD_2_0
         [System.Runtime.CompilerServices.MethodImpl (System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-#endif
-        public Either<TLeft, R> MapRight<R>(Func<TRight, R> handler)
+        public Either<TLeft, R, TCheckPolicy> MapRight<R>(Func<TRight, R> handler)
         {
-#if APOPHIS_CHECK
-            ExceptionUtility.NullHandlerCheck(handler);
-#endif
+            if(default(TCheckPolicy).NeedCheck)
+                ExceptionUtility.NullHandlerCheck(handler);
+
             return _hasLeft == false ? 
-                handler(_right).ToRight<TLeft, R>() : 
-                new Either<TLeft, R>(_left, default(R), _hasLeft);
+                handler(_right).ToRight<TLeft, R, TCheckPolicy>() : 
+                new Either<TLeft, R, TCheckPolicy>(_left, default(R), _hasLeft);
         }
 
         /// <summary>
@@ -415,16 +380,16 @@ namespace Apophis.Types.Monads.Either
         /// <typeparam name="L">New hold left type</typeparam>
         /// <typeparam name="R">New hold right type</typeparam>
         /// <returns>Return Either with new type, who contain old branch(left or right).</returns>
-#if NET_4_6 || NET_STANDARD_2_0
         [System.Runtime.CompilerServices.MethodImpl (System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-#endif
-        public Either<L, R> Map<L, R>(Func<TLeft, L> left, Func<TRight, R> right)
+        public Either<L, R, TCheckPolicy> Map<L, R>(Func<TLeft, L> left, Func<TRight, R> right)
         {
-#if APOPHIS_CHECK
-            ExceptionUtility.NullHandlerCheck(left);
-            ExceptionUtility.NullHandlerCheck(right);
-#endif
-            return _hasLeft ? new Either<L, R>(left(_left)) : new Either<L, R>(right(_right));
+            if (default(TCheckPolicy).NeedCheck)
+            {
+                ExceptionUtility.NullHandlerCheck(left);
+                ExceptionUtility.NullHandlerCheck(right);
+            }
+
+            return _hasLeft ? new Either<L, R, TCheckPolicy>(left(_left)) : new Either<L, R, TCheckPolicy>(right(_right));
         }
         
         /// <summary>
@@ -433,14 +398,12 @@ namespace Apophis.Types.Monads.Either
         /// Otherwise, returns false.
         /// </summary>
         /// <param name="predicate">Predicate for testing</param>
-#if NET_4_6 || NET_STANDARD_2_0
         [System.Runtime.CompilerServices.MethodImpl (System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-#endif
         public bool ExistLeft(Func<TLeft, bool> predicate)
         {
-#if APOPHIS_CHECK
-            ExceptionUtility.NullPredicatCheck(predicate);
-#endif
+            if(default(TCheckPolicy).NeedCheck)
+                ExceptionUtility.NullPredicatCheck(predicate);
+
             return _hasLeft && predicate(_left);
         }
 
@@ -450,14 +413,12 @@ namespace Apophis.Types.Monads.Either
         /// Otherwise, returns false.
         /// </summary>
         /// <param name="predicate">Predicate for testing</param>
-#if NET_4_6 || NET_STANDARD_2_0
         [System.Runtime.CompilerServices.MethodImpl (System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-#endif
         public bool ExistRight(Func<TRight, bool> predicate)
         {
-#if APOPHIS_CHECK
-            ExceptionUtility.NullPredicatCheck(predicate);
-#endif
+            if(default(TCheckPolicy).NeedCheck)
+                ExceptionUtility.NullPredicatCheck(predicate);
+
             return _hasLeft == false && predicate(_right);
         }
 
@@ -467,15 +428,15 @@ namespace Apophis.Types.Monads.Either
         /// </summary>
         /// <param name="predicateLeft">Predicate for left branch testing</param>
         /// <param name="predicateRight">Predicate for right branch testing</param>
-#if NET_4_6 || NET_STANDARD_2_0
         [System.Runtime.CompilerServices.MethodImpl (System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-#endif
         public bool Exist(Func<TLeft, bool> predicateLeft, Func<TRight, bool> predicateRight)
         {
-#if APOPHIS_CHECK
-            ExceptionUtility.NullPredicatCheck(predicateLeft);
-            ExceptionUtility.NullPredicatCheck(predicateRight);
-#endif
+            if(default(TCheckPolicy).NeedCheck)
+            {
+                ExceptionUtility.NullPredicatCheck(predicateLeft);
+                ExceptionUtility.NullPredicatCheck(predicateRight);
+            }
+
             return _hasLeft ? predicateLeft(_left) : predicateRight(_right);
         }
         
@@ -484,14 +445,12 @@ namespace Apophis.Types.Monads.Either
         /// predicate returns true when applied to this left value.
         /// </summary>
         /// <param name="predicate">Predicate for testing</param>
-#if NET_4_6 || NET_STANDARD_2_0
         [System.Runtime.CompilerServices.MethodImpl (System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-#endif
         public bool ForallLeft(Func<TLeft, bool> predicate)
         {
-#if APOPHIS_CHECK
-            ExceptionUtility.NullPredicatCheck(predicate);
-#endif
+            if(default(TCheckPolicy).NeedCheck)
+                ExceptionUtility.NullPredicatCheck(predicate);
+
             return !_hasLeft || predicate(_left);
         }
         
@@ -500,14 +459,12 @@ namespace Apophis.Types.Monads.Either
         /// predicate returns true when applied to this right value.
         /// </summary>
         /// <param name="predicate">Predicate for testing</param>
-#if NET_4_6 || NET_STANDARD_2_0
         [System.Runtime.CompilerServices.MethodImpl (System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-#endif
         public bool ForallRight(Func<TRight, bool> predicate)
         {
-#if APOPHIS_CHECK
-            ExceptionUtility.NullPredicatCheck(predicate);
-#endif
+            if(default(TCheckPolicy).NeedCheck)
+                ExceptionUtility.NullPredicatCheck(predicate);
+            
             return _hasLeft || predicate(_right);
         }
         
@@ -517,13 +474,8 @@ namespace Apophis.Types.Monads.Either
         /// Otherwise, returns false.
         /// </summary>
         /// <param name="val">Value for compare</param>
-#if NET_4_6 || NET_STANDARD_2_0
         [System.Runtime.CompilerServices.MethodImpl (System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-#endif
-        public bool ContainRight(TRight val)
-        {
-            return _hasLeft  == false && Comparer<TRight>.Default.Compare(_right, val) == 0;
-        }
+        public bool ContainRight(TRight val) => _hasLeft  == false && Comparer<TRight>.Default.Compare(_right, val) == 0;
 
         /// <summary>
         /// Returns true if this either has left and the
@@ -531,13 +483,8 @@ namespace Apophis.Types.Monads.Either
         /// Otherwise, returns false.
         /// </summary>
         /// <param name="val">Value for compare</param>
-#if NET_4_6 || NET_STANDARD_2_0
         [System.Runtime.CompilerServices.MethodImpl (System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-#endif
-        public bool ContainLeft(TLeft val)
-        {
-            return _hasLeft && Comparer<TLeft>.Default.Compare(_left, val) == 0;
-        }
+        public bool ContainLeft(TLeft val) => _hasLeft && Comparer<TLeft>.Default.Compare(_left, val) == 0;
 
         /// <summary>
         /// Returns true if this either has left and the
@@ -547,9 +494,7 @@ namespace Apophis.Types.Monads.Either
         /// </summary>
         /// <param name="leftVal">Value for left branch compare</param>
         /// <param name="rightVal">Value for right branch compare</param>
-#if NET_4_6 || NET_STANDARD_2_0
         [System.Runtime.CompilerServices.MethodImpl (System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-#endif
         public bool Contain(TLeft leftVal, TRight rightVal)
         {
             if(_hasLeft)
@@ -563,15 +508,13 @@ namespace Apophis.Types.Monads.Either
         /// this value returns true. Otherwise, return None.
         /// </summary>
         /// <param name="predicate">Predicate for testing</param>
-#if NET_4_6 || NET_STANDARD_2_0
         [System.Runtime.CompilerServices.MethodImpl (System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-#endif
-        public Option<TLeft> FilterLeft(Func<TLeft, bool> predicate)
+        public Option<TLeft, SafePolicy> FilterLeft(Func<TLeft, bool> predicate)
         {
-#if APOPHIS_CHECK
-            ExceptionUtility.NullPredicatCheck(predicate);
-#endif
-            return _hasLeft && predicate(_left) ? _left.ToOption() : Optional.None<TLeft>();
+            if(default(TCheckPolicy).NeedCheck)
+                ExceptionUtility.NullPredicatCheck(predicate);
+
+            return _hasLeft && predicate(_left) ? _left.ToSafeOption() : Optional.None<TLeft, SafePolicy>();
         }
 
         /// <summary>
@@ -579,15 +522,13 @@ namespace Apophis.Types.Monads.Either
         /// this value returns true. Otherwise, return None.
         /// </summary>
         /// <param name="predicate">Predicate for testing</param>
-#if NET_4_6 || NET_STANDARD_2_0
         [System.Runtime.CompilerServices.MethodImpl (System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-#endif
-        public Option<TRight> FilterRight(Func<TRight, bool> predicate)
+        public Option<TRight, SafePolicy> FilterRight(Func<TRight, bool> predicate)
         {
-#if APOPHIS_CHECK
-            ExceptionUtility.NullPredicatCheck(predicate);
-#endif
-            return !_hasLeft && predicate(_right) ? _right.ToOption() : Optional.None<TRight>();
+            if(default(TCheckPolicy).NeedCheck)
+                ExceptionUtility.NullPredicatCheck(predicate);
+            
+            return !_hasLeft && predicate(_right) ? _right.ToSafeOption() : Optional.None<TRight, SafePolicy>();
         }
         
         /// <summary>
@@ -596,26 +537,25 @@ namespace Apophis.Types.Monads.Either
         /// </summary>
         /// <param name="predicateLeft">Predicate for left branch testing</param>
         /// <param name="predicateRight">Predicate for right branch testing</param>
-#if NET_4_6 || NET_STANDARD_2_0
-        [System.Runtime.CompilerServices.MethodImpl (System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-#endif
-        public Option<Either<TLeft, TRight>> Filter(Func<TLeft, bool> predicateLeft, Func<TRight, bool> predicateRight)
+        public Option<Either<TLeft, TRight, TCheckPolicy>, SafePolicy> Filter(Func<TLeft, bool> predicateLeft, Func<TRight, bool> predicateRight)
         {
-#if APOPHIS_CHECK
-            ExceptionUtility.NullPredicatCheck(predicateLeft);
-            ExceptionUtility.NullPredicatCheck(predicateRight);
-#endif
+            if(default(TCheckPolicy).NeedCheck)
+            {
+                ExceptionUtility.NullPredicatCheck(predicateLeft);
+                ExceptionUtility.NullPredicatCheck(predicateRight);
+            }
+
             if (_hasLeft)
             {
                 if (predicateLeft(_left))
-                    return this.ToOption();
+                    return this.ToSafeOption();
             }
             else if (predicateRight(_right))
             {
-                return this.ToOption();
+                return this.ToSafeOption();
             }
             
-            return Optional.None<Either<TLeft, TRight>>();
+            return Optional.None<Either<TLeft, TRight, TCheckPolicy>, SafePolicy>();
         }
 
         /// <summary>
@@ -623,38 +563,26 @@ namespace Apophis.Types.Monads.Either
         /// Otherwise - defaultValue
         /// </summary>
         /// <param name="defaultVal">Default value, if either - right</param>
-#if NET_4_6 || NET_STANDARD_2_0
         [System.Runtime.CompilerServices.MethodImpl (System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-#endif
-        public TLeft LeftOr(TLeft defaultVal)
-        {
-            return _hasLeft ? _left : defaultVal;
-        }
+        public TLeft LeftOr(TLeft defaultVal) => _hasLeft ? _left : defaultVal;
         
         /// <summary>
         /// If either - Left, return _left.
         /// Otherwise - default value for type. May return null, if TLeft - class
         /// </summary>
-#if NET_4_6 || NET_STANDARD_2_0
         [System.Runtime.CompilerServices.MethodImpl (System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-#endif
-        public TLeft LeftOrDefault()
-        {
-            return _hasLeft ? _left : default(TLeft);
-        }
+        public TLeft LeftOrDefault() => _hasLeft ? _left : default(TLeft);
 
         /// <summary>
         /// If either - Left, return _left.
         /// Otherwise use factory function, for create return value.
         /// </summary>
-#if NET_4_6 || NET_STANDARD_2_0
         [System.Runtime.CompilerServices.MethodImpl (System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-#endif
         public TLeft LeftOr(Func<TLeft> defaultValFactory)
         {
-#if APOPHIS_CHECK
-            ExceptionUtility.NullHandlerCheck(defaultValFactory);
-#endif
+            if(default(TCheckPolicy).NeedCheck)
+                ExceptionUtility.NullHandlerCheck(defaultValFactory);
+
             return _hasLeft ? _left : defaultValFactory();
         }
 
@@ -663,9 +591,6 @@ namespace Apophis.Types.Monads.Either
         /// Otherwise throw not found exception.
         /// </summary>
         /// <exception cref="EitherExceptions.EitherNotFound"></exception>
-#if NET_4_6 || NET_STANDARD_2_0
-        [System.Runtime.CompilerServices.MethodImpl (System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-#endif
         public TLeft LeftOrThrow()
         {
             if(!_hasLeft)
@@ -679,38 +604,26 @@ namespace Apophis.Types.Monads.Either
         /// Otherwise - defaultValue
         /// </summary>
         /// <param name="defaultVal">Default value, if either - left</param>
-#if NET_4_6 || NET_STANDARD_2_0
         [System.Runtime.CompilerServices.MethodImpl (System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-#endif
-        public TRight RightOr(TRight defaultVal)
-        {
-            return _hasLeft == false ? _right : defaultVal;
-        }
+        public TRight RightOr(TRight defaultVal) => _hasLeft == false ? _right : defaultVal;
 
         /// <summary>
         /// If either - Right, return _right.
         /// Otherwise - default value for type. May return null, if TRight - class
         /// </summary>
-#if NET_4_6 || NET_STANDARD_2_0
         [System.Runtime.CompilerServices.MethodImpl (System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-#endif
-        public TRight RightOrDefault()
-        {
-            return _hasLeft == false ? _right : default(TRight);
-        }
+        public TRight RightOrDefault() => _hasLeft == false ? _right : default(TRight);
         
         /// <summary>
         /// If either - Right, return _right.
         /// Otherwise use factory function, for create return value.
         /// </summary>
-#if NET_4_6 || NET_STANDARD_2_0
         [System.Runtime.CompilerServices.MethodImpl (System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-#endif
         public TRight RightOr(Func<TRight> defaultValFactory)
         {
-#if APOPHIS_CHECK
-            ExceptionUtility.NullHandlerCheck(defaultValFactory);
-#endif
+            if(default(TCheckPolicy).NeedCheck)
+                ExceptionUtility.NullHandlerCheck(defaultValFactory);
+
             return _hasLeft == false ? _right : defaultValFactory();
         }
         
@@ -719,9 +632,6 @@ namespace Apophis.Types.Monads.Either
         /// Otherwise throw not found exception.
         /// </summary>
         /// <exception cref="EitherExceptions.EitherNotFound"></exception>
-#if NET_4_6 || NET_STANDARD_2_0
-        [System.Runtime.CompilerServices.MethodImpl (System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-#endif
         public TRight RightOrThrow()
         {
             if(_hasLeft)
@@ -739,15 +649,14 @@ namespace Apophis.Types.Monads.Either
         /// </summary>
         /// <param name="left">Action run, if either has left branch</param>
         /// <param name="right">Action run, if either has right branch</param>
-#if NET_4_6 || NET_STANDARD_2_0
-        [System.Runtime.CompilerServices.MethodImpl (System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-#endif
         public Unit Match(Action<TLeft> left, Action<TRight> right)
         {
-#if APOPHIS_CHECK
-            ExceptionUtility.NullHandlerCheck(left);
-            ExceptionUtility.NullHandlerCheck(right);
-#endif
+            if(default(TCheckPolicy).NeedCheck)
+            {
+                ExceptionUtility.NullHandlerCheck(left);
+                ExceptionUtility.NullHandlerCheck(right);
+            }
+
             if (_hasLeft)
                     left(_left);
             else
@@ -762,15 +671,15 @@ namespace Apophis.Types.Monads.Either
         /// <param name="left">Func run, if either has left branch</param>
         /// <param name="right">Func run, if either has right branch</param>
         /// <returns>Return value from left, if either has left branch, otherwise from right handler</returns>
-#if NET_4_6 || NET_STANDARD_2_0
-        [System.Runtime.CompilerServices.MethodImpl (System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-#endif
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public R Match<R>(Func<TLeft, R> left, Func<TRight, R> right)
         {
-#if APOPHIS_CHECK
-            ExceptionUtility.NullHandlerCheck(left);
-            ExceptionUtility.NullHandlerCheck(right);
-#endif
+            if(default(TCheckPolicy).NeedCheck)
+            {
+                ExceptionUtility.NullHandlerCheck(left);
+                ExceptionUtility.NullHandlerCheck(right);
+            }
+
             return _hasLeft ? left(_left) : right(_right);
         }
                 
@@ -780,14 +689,12 @@ namespace Apophis.Types.Monads.Either
         /// <param name="left">Func run, if either has left branch</param>
         /// <param name="nonLeft">Return if either - Right</param>
         /// <returns>If either - left, return value from left, otherwise - nonLeft value</returns>
-#if NET_4_6 || NET_STANDARD_2_0
         [System.Runtime.CompilerServices.MethodImpl (System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-#endif
         public R MatchLeft<R>(Func<TLeft, R> left, R nonLeft)
         {
-#if APOPHIS_CHECK
-            ExceptionUtility.NullHandlerCheck(left);
-#endif
+            if(default(TCheckPolicy).NeedCheck)
+                ExceptionUtility.NullHandlerCheck(left);
+
             return _hasLeft ? left(_left) : nonLeft;
         }
         
@@ -797,15 +704,15 @@ namespace Apophis.Types.Monads.Either
         /// <param name="left">Func run, if either has left branch</param>
         /// <param name="nonLeft">Run this factory, for create return value, if either - Right</param>
         /// <returns>If either - left, return value from left, otherwise create value from nonLeft function</returns>
-#if NET_4_6 || NET_STANDARD_2_0
         [System.Runtime.CompilerServices.MethodImpl (System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-#endif
         public R MatchLeft<R>(Func<TLeft, R> left, Func<R> nonLeft)
         {
-#if APOPHIS_CHECK
-            ExceptionUtility.NullHandlerCheck(left);
-            ExceptionUtility.NullHandlerCheck(nonLeft);
-#endif
+            if(default(TCheckPolicy).NeedCheck)
+            {
+                ExceptionUtility.NullHandlerCheck(left);
+                ExceptionUtility.NullHandlerCheck(nonLeft);
+            }
+
             return _hasLeft ? left(_left) : nonLeft();
         }
 
@@ -813,14 +720,11 @@ namespace Apophis.Types.Monads.Either
         /// Pattern matching for left either
         /// </summary>
         /// <param name="left">Action run, if either has left branch</param>
-#if NET_4_6 || NET_STANDARD_2_0
-        [System.Runtime.CompilerServices.MethodImpl (System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-#endif
         public Unit MatchLeft(Action<TLeft> left)
         {
-#if APOPHIS_CHECK
-            ExceptionUtility.NullHandlerCheck(left);
-#endif
+            if(default(TCheckPolicy).NeedCheck)
+                ExceptionUtility.NullHandlerCheck(left);
+
             if (_hasLeft)
                     left(_left);
             
@@ -831,14 +735,11 @@ namespace Apophis.Types.Monads.Either
         /// Pattern matching for right either
         /// </summary>
         /// <param name="right">Action run, if either has right branch</param>
-#if NET_4_6 || NET_STANDARD_2_0
-        [System.Runtime.CompilerServices.MethodImpl (System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-#endif
         public Unit MatchRight(Action<TRight> right)
         {
-#if APOPHIS_CHECK
-            ExceptionUtility.NullHandlerCheck(right);
-#endif
+            if(default(TCheckPolicy).NeedCheck)
+                ExceptionUtility.NullHandlerCheck(right);
+
             if (!_hasLeft)
                     right(_right);
             
@@ -851,14 +752,12 @@ namespace Apophis.Types.Monads.Either
         /// <param name="right">Func run, if either has right branch</param>
         /// <param name="nonRight">Return if either - Left</param>
         /// <returns>If either - right, return value from right, otherwise - nonRight value</returns>
-#if NET_4_6 || NET_STANDARD_2_0
         [System.Runtime.CompilerServices.MethodImpl (System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-#endif
         public R MatchRight<R>(Func<TRight, R> right, R nonRight)
         {
-#if APOPHIS_CHECK
-            ExceptionUtility.NullHandlerCheck(right);
-#endif
+            if(default(TCheckPolicy).NeedCheck)
+                ExceptionUtility.NullHandlerCheck(right);
+
             return _hasLeft == false ? right(_right) : nonRight;
         }
 
@@ -868,39 +767,32 @@ namespace Apophis.Types.Monads.Either
         /// <param name="right">Func run, if either has right branch</param>
         /// <param name="nonRight">Run this factory, for create return value, if either - Left</param>
         /// <returns>If either - right, return value from left, otherwise create value from nonRight function</returns>
-#if NET_4_6 || NET_STANDARD_2_0
         [System.Runtime.CompilerServices.MethodImpl (System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-#endif
         public R MatchRight<R>(Func<TRight, R> right, Func<R> nonRight)
         {
-#if APOPHIS_CHECK
-            ExceptionUtility.NullHandlerCheck(right);
-            ExceptionUtility.NullHandlerCheck(nonRight);
-#endif
+            if(default(TCheckPolicy).NeedCheck)
+            {
+                ExceptionUtility.NullHandlerCheck(right);
+                ExceptionUtility.NullHandlerCheck(nonRight);
+            }
+            
             return _hasLeft == false ? right(_right) : nonRight();
         }
         
         #endregion
         
-        public static implicit operator Either<TLeft, TRight>(TLeft left)
-        {
-            return new Either<TLeft, TRight>(left);
-        }
+        [System.Runtime.CompilerServices.MethodImpl (System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public static implicit operator Either<TLeft, TRight, TCheckPolicy>(TLeft left) => new Either<TLeft, TRight, TCheckPolicy>(left);
 
-        public static implicit operator Either<TLeft, TRight>(TRight right)
-        {
-            return new Either<TLeft, TRight>(right);
-        }
+        [System.Runtime.CompilerServices.MethodImpl (System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public static implicit operator Either<TLeft, TRight, TCheckPolicy>(TRight right) => new Either<TLeft, TRight, TCheckPolicy>(right);
 
-        public IEnumerator<Either<TLeft, TRight>> GetEnumerator()
+        public IEnumerator<Either<TLeft, TRight, TCheckPolicy>> GetEnumerator()
         {
             yield return this;
         }
 
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return GetEnumerator();
-        }
+        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
         IEnumerable<TLeft> GetLeftEnumerator()
         {
@@ -914,11 +806,32 @@ namespace Apophis.Types.Monads.Either
                 yield return _right;
         }
         
-        public override string ToString()
-        {
-            return _hasLeft ? 
-                string.Concat("Left(", _left.ToString(), ")") :
-                string.Concat("Right(", _right.ToString(), ")");
-        }
+        [System.Runtime.CompilerServices.MethodImpl (System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public override string ToString() => _hasLeft ? 
+            string.Concat("Left(", _left.ToString(), ")") :
+            string.Concat("Right(", _right.ToString(), ")");
+
+        #region From Other Either
+
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public static Either<TLeft, TRight, TCheckInPolicy> Of<TCheckOutPolicy, TCheckInPolicy>(Either<Either<TLeft, TRight, TCheckInPolicy>, TRight, TCheckOutPolicy> other)
+            where TCheckOutPolicy : struct, ICheckPolicy 
+            where TCheckInPolicy : struct, ICheckPolicy 
+            => new Either<TLeft, TRight, TCheckInPolicy>(other._left._left, other._right, other._hasLeft && other._left._hasLeft);
+        
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public static Either<TLeft, TRight, TCheckInPolicy> Of<TCheckOutPolicy, TCheckInPolicy>(Either<TLeft, Either<TLeft, TRight, TCheckInPolicy>, TCheckOutPolicy> other)
+        where TCheckOutPolicy : struct, ICheckPolicy 
+        where TCheckInPolicy : struct, ICheckPolicy 
+            => new Either<TLeft, TRight, TCheckInPolicy>(other._left, other._right._right, other._hasLeft || other._right._hasLeft);
+        
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public static Either<TLeft, TRight, TCheckHoldPolicy> Of<TCheckLeftPolicy, TCheckRightPolicy, TCheckHoldPolicy>(Either<Either<TLeft, TRight, TCheckLeftPolicy>, Either<TLeft, TRight, TCheckRightPolicy>, TCheckHoldPolicy> other)
+            where TCheckLeftPolicy : struct, ICheckPolicy 
+            where TCheckRightPolicy : struct, ICheckPolicy 
+            where TCheckHoldPolicy : struct, ICheckPolicy 
+            => new Either<TLeft, TRight, TCheckHoldPolicy>(other._left._left, other._right._right, other._hasLeft ? other._left._hasLeft : other._right._hasLeft);
+
+        #endregion
     }
 }

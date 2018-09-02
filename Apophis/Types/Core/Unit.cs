@@ -2,7 +2,7 @@ using System;
 
 namespace Apophis.Types.Core
 {
-    public struct Unit : IEquatable<Unit>, IComparable<Unit>
+    public struct Unit : IEquatable<Unit>, IComparable<Unit>, IComparable
     {
         public static Unit Def = new Unit();
 
@@ -14,6 +14,11 @@ namespace Apophis.Types.Core
         public override int GetHashCode()
         {
             return 1;
+        }
+
+        public int CompareTo(object obj)
+        {
+            return obj is Unit ? 0 : -1;
         }
 
         public override string ToString()

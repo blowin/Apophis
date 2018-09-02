@@ -1,5 +1,6 @@
 using Apophis.Types.Extensions;
 using Apophis.Types.Monads.Option;
+using Apophis.Types.Policys.Check;
 
 namespace Apophis.Examples
 {
@@ -7,27 +8,27 @@ namespace Apophis.Examples
     {
         public static void ToString()
         {
-            Optional.Some(2).Print(); // Some(2)
+            Optional.SomeSafe(2).Print(); // Some(2)
             
-            "Hello Apophis".ToOption().ToOption().ToOption().Print(); // Some(Some(Some(Hello Apophis)))
-            Optional.None<int>().Print(); // None
+            "Hello Apophis".ToSafeOption().ToSafeOption().ToSafeOption().Print(); // Some(Some(Some(Hello Apophis)))
+            Optional.NoneSafe<int>().Print(); // None
         }
 
         public static void CreateWay()
         {
-            Option<string> optionNone = Optional.None<string>();
-            Option<string> optionNone2 = null;
-            Option<string> optionNone3 = new Option<string>();
+            Option<string, SafePolicy> optionNone = Optional.NoneSafe<string>();
+            Option<string, SafePolicy> optionNone2 = null;
+            Option<string, UnsafePolicy> optionNone3 = new Option<string, UnsafePolicy>();
             
-            Option<int> option = 20;
-            Option<int> option2 = Optional.Some(20);
-            Option<int> option3 = 20.ToOption();
-            Option<int> option4 = new Option<int>(20);
+            Option<int, SafePolicy> option = 20;
+            Option<int, UnsafePolicy> option2 = Optional.SomeUnsafe(20);
+            Option<int, SafePolicy> option3 = 20.ToSafeOption();
+            Option<int, SafePolicy> option4 = new Option<int, SafePolicy>(20);
         }
 
         public static void Math()
         {
-            Option<string> none = null;
+            Option<string, SafePolicy> none = null;
 
             none.Match( // Option is empty
                 some: s => $"Hold value is: {s}".Print(), 
@@ -42,7 +43,7 @@ namespace Apophis.Examples
                 () => "default value"
             ); // return "default value"
 
-            var someOpt = "Hello".ToOption();
+            var someOpt = "Hello".ToUnsafeOption();
 
             string returnMath2 = someOpt.Match(
                 s => s,
@@ -52,9 +53,9 @@ namespace Apophis.Examples
 
         public static void Operations()
         {
-            var option1 = 2.ToOption();
+            var option1 = 2.ToSafeOption();
             
-            var option2 = Optional.Some(System.Math.PI).Map(d => d * System.Math.E);
+            var option2 = Optional.SomeUnsafe(System.Math.PI).Map(d => d * System.Math.E);
             
             var result = option1
                 .Map(i => i * 200) // 2 * 200 == 400

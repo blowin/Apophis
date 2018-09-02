@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Apophis.Types.Extensions;
 using Apophis.Types.Monads.Either;
+using Apophis.Types.Policys.Check;
 
 namespace Apophis.Examples
 {
@@ -10,8 +11,8 @@ namespace Apophis.Examples
     {
         public static void MergeExample()
         {
-            var e = new int[]{1, 2, 3}.ToLeft<int[], List<int>>();
-            var e2 = "hello".ToRight<float, string>();
+            var e = new int[]{1, 2, 3}.ToUnsafeLeft<int[], List<int>>();
+            var e2 = "hello".ToUnsafeRight<float, string>();
 
             IList<int> result;
             
@@ -36,16 +37,16 @@ namespace Apophis.Examples
 
             var data = "Hello my fr1end"; // Left(FoundDigitException)
 
-            Either<Exception, string> result = string.Empty.ToRight<Exception, string>();
+            Either<Exception, string, SafePolicy> result = string.Empty.ToSafeRight<Exception, string>();
             
-            result = data.Any(char.IsDigit) ? (Either<Exception, string>) new FoundDigitException() : data;
+            result = data.Any(char.IsDigit) ? (Either<Exception, string, SafePolicy>) new FoundDigitException() : data;
             
             result.Print();
         }
 
         public static void ContainExample()
         {
-            var left = 10.ToLeft<int, double>();
+            var left = 10.ToSafeLeft<int, double>();
             
             "Contain left 20: ".Print("");
             left.ContainLeft(20).Print(); // false

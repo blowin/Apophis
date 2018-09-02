@@ -1,5 +1,5 @@
 using System.Collections.Generic;
-using Apophis.Types.Milxn;
+using Apophis.Types.Mixin;
 
 namespace Apophis.Types.Extensions.Mixln
 {

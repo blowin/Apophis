@@ -1,4 +1,4 @@
-namespace Apophis.Types.Milxn
+namespace Apophis.Types.Mixin
 {
     public interface ITypeClass<T>
         where T : struct
