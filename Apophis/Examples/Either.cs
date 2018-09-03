@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Apophis.Types.Extensions;
-using Apophis.Types.Monads.Either;
+using Apophis.Types.Monads;
 using Apophis.Types.Policys.Check;
 
 namespace Apophis.Examples

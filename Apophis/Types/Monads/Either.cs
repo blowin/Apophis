@@ -7,10 +7,9 @@ using Apophis.Types.Enums;
 using Apophis.Types.Exceptions;
 using Apophis.Types.Extensions;
 using Apophis.Types.Mixin;
-using Apophis.Types.Monads.Option;
 using Apophis.Types.Policys.Check;
 
-namespace Apophis.Types.Monads.Either
+namespace Apophis.Types.Monads
 {
     [Serializable]
     [StructLayout(LayoutKind.Auto)]
@@ -766,7 +765,7 @@ namespace Apophis.Types.Monads.Either
         /// </summary>
         /// <param name="right">Func run, if either has right branch</param>
         /// <param name="nonRight">Run this factory, for create return value, if either - Left</param>
-        /// <returns>If either - right, return value from left, otherwise create value from nonRight function</returns>
+        /// <returns>If either - right, return value from right, otherwise create value from nonRight function</returns>
         [System.Runtime.CompilerServices.MethodImpl (System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public R MatchRight<R>(Func<TRight, R> right, Func<R> nonRight)
         {
