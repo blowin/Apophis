@@ -4,6 +4,7 @@
 ### Monads list:
 
 * Option
+* OptionRef
 * Either
 * EitherRef
 * Try
