@@ -7,9 +7,11 @@ using Apophis.Types.Enums;
 using Apophis.Types.Exceptions;
 using Apophis.Types.Extensions;
 using Apophis.Types.Mixin;
+using Apophis.Types.Monads.Either;
+using Apophis.Types.Monads.Option;
 using Apophis.Types.Policys.Check;
 
-namespace Apophis.Types.Monads
+namespace Apophis.Types.Monads.Try
 {
     [Serializable]
     [StructLayout(LayoutKind.Auto)]
@@ -86,6 +88,13 @@ namespace Apophis.Types.Monads
         }
         
         [System.Runtime.CompilerServices.MethodImpl (System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        private Try(T val, Exception error)
+        {
+            _value = val;
+            _error = error;
+        }
+        
+        [System.Runtime.CompilerServices.MethodImpl (System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public override bool Equals(object obj) => CompareTo(obj) == 0;
 
         [System.Runtime.CompilerServices.MethodImpl (System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
@@ -148,7 +157,7 @@ namespace Apophis.Types.Monads
         /// <param name="handler">Applying func</param>
         /// <typeparam name="R">New hold value type</typeparam>
         [System.Runtime.CompilerServices.MethodImpl (System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public Try<R, TOthCheckPolicy> FlatMapLeft<R, TOthCheckPolicy>(Func<T, Try<R, TOthCheckPolicy>> handler)
+        public Try<R, TOthCheckPolicy> FlatMap<R, TOthCheckPolicy>(Func<T, Try<R, TOthCheckPolicy>> handler)
             where TOthCheckPolicy : struct, ICheckPolicy
         {
             if(default(TCheckPolicy).NeedCheck)
@@ -245,7 +254,7 @@ namespace Apophis.Types.Monads
         /// Otherwise use factory function, for create return value.
         /// </summary>
         [System.Runtime.CompilerServices.MethodImpl (System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public T LeftOr(Func<T> defaultValFactory)
+        public T ValueOr(Func<T> defaultValFactory)
         {
             if(default(TCheckPolicy).NeedCheck)
                 ExceptionUtility.NullHandlerCheck(defaultValFactory);
@@ -442,6 +451,11 @@ namespace Apophis.Types.Monads
         [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public Option<T, TCheckPolicy> ToOption() => _error != null ? Optional.None<T, TCheckPolicy>() : Optional.Some<T, TCheckPolicy>(_value);
 
+        [System.Runtime.CompilerServices.MethodImpl(
+            System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public Try<T, TOtherPolicy> ToTry<TOtherPolicy>()
+            where TOtherPolicy : struct, ICheckPolicy => new Try<T, TOtherPolicy>(_value, _error);
+        
         #endregion
         
         [System.Runtime.CompilerServices.MethodImpl (System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
@@ -484,13 +498,16 @@ namespace Apophis.Types.Monads
 
     public static class Try
     {
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public static Try<T, TCheckPolicy> From<T, TError, TCheckPolicy>() 
             where TError : Exception, new()
             where TCheckPolicy : struct, ICheckPolicy => new Try<T, TCheckPolicy>(new TError());
         
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public static Try<T, SafePolicy> FromSafe<T, TError>() 
             where TError : Exception, new() => new Try<T, SafePolicy>(new TError());
         
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public static Try<T, UnsafePolicy> FromUnsafe<T, TError>() 
             where TError : Exception, new() => new Try<T, UnsafePolicy>(new TError());
     }

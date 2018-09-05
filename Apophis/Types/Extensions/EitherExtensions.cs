@@ -1,4 +1,5 @@
 using Apophis.Types.Monads;
+using Apophis.Types.Monads.Either;
 using Apophis.Types.Policys.Check;
 
 namespace Apophis.Types.Extensions

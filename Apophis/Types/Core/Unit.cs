@@ -6,67 +6,43 @@ namespace Apophis.Types.Core
     {
         public static Unit Def = new Unit();
 
-        public override bool Equals(object obj)
-        {
-            return obj is Unit;
-        }
+        [System.Runtime.CompilerServices.MethodImpl (System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public override bool Equals(object obj) => obj is Unit;
 
-        public override int GetHashCode()
-        {
-            return 1;
-        }
+        [System.Runtime.CompilerServices.MethodImpl (System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public override int GetHashCode() => 421 << 2;
 
-        public int CompareTo(object obj)
-        {
-            return obj is Unit ? 0 : -1;
-        }
+        [System.Runtime.CompilerServices.MethodImpl (System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public int CompareTo(object obj) => obj is Unit ? 0 : -1;
 
-        public override string ToString()
-        {
-            return "Unit";
-        }
+        [System.Runtime.CompilerServices.MethodImpl (System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public override string ToString() => "Unit";
 
-        bool IEquatable<Unit>.Equals(Unit other)
-        {
-            return true;
-        }
+        [System.Runtime.CompilerServices.MethodImpl (System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        bool IEquatable<Unit>.Equals(Unit other) => true;
 
-        int IComparable<Unit>.CompareTo(Unit other)
-        {
-            return 0;
-        }
+        [System.Runtime.CompilerServices.MethodImpl (System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        int IComparable<Unit>.CompareTo(Unit other) => 0;
 
         #region Equals operators
 
-        public static bool operator ==(Unit lhs, Unit rhs)
-        {
-            return true;
-        }
+        [System.Runtime.CompilerServices.MethodImpl (System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public static bool operator ==(Unit lhs, Unit rhs) => true;
 
-        public static bool operator !=(Unit lhs, Unit rhs)
-        {
-            return true;
-        }
+        [System.Runtime.CompilerServices.MethodImpl (System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public static bool operator !=(Unit lhs, Unit rhs) => true;
 
-        public static bool operator >(Unit lhs, Unit rhs)
-        {
-            return true;
-        }
+        [System.Runtime.CompilerServices.MethodImpl (System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public static bool operator >(Unit lhs, Unit rhs) => true;
 
-        public static bool operator >=(Unit lhs, Unit rhs)
-        {
-            return true;
-        }
+        [System.Runtime.CompilerServices.MethodImpl (System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public static bool operator >=(Unit lhs, Unit rhs) => true;
+        
+        [System.Runtime.CompilerServices.MethodImpl (System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public static bool operator <(Unit lhs, Unit rhs) => true;
 
-        public static bool operator <(Unit lhs, Unit rhs)
-        {
-            return true;
-        }
-
-        public static bool operator <=(Unit lhs, Unit rhs)
-        {
-            return true;
-        }
+        [System.Runtime.CompilerServices.MethodImpl (System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public static bool operator <=(Unit lhs, Unit rhs) => true;
 
         #endregion
     }

@@ -7,9 +7,10 @@ using Apophis.Types.Enums;
 using Apophis.Types.Exceptions;
 using Apophis.Types.Extensions;
 using Apophis.Types.Mixin;
+using Apophis.Types.Monads.Option;
 using Apophis.Types.Policys.Check;
 
-namespace Apophis.Types.Monads
+namespace Apophis.Types.Monads.Either
 {
     [Serializable]
     [StructLayout(LayoutKind.Auto)]

@@ -6,9 +6,11 @@ using Apophis.Types.Enums;
 using Apophis.Types.Exceptions;
 using Apophis.Types.Extensions;
 using Apophis.Types.Mixin;
+using Apophis.Types.Monads.Either;
+using Apophis.Types.Monads.Try;
 using Apophis.Types.Policys.Check;
 
-namespace Apophis.Types.Monads
+namespace Apophis.Types.Monads.Option
 {
     /// <summary>
     /// Represents optional values. It is in one of two states. There is an object(Some) or not(None).

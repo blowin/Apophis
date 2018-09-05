@@ -1,5 +1,6 @@
 using Apophis.Types.Extensions;
 using Apophis.Types.Monads;
+using Apophis.Types.Monads.Option;
 using Apophis.Types.Policys.Check;
 
 namespace Apophis.Examples
