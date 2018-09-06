@@ -1,7 +1,15 @@
 .idea
+
 out
 gen
+
 Apophis.sln
 Apophis/obj
 Apophis/bin
 Apophis/Properties
+Apophis/Program.cs
+Apophis/Apophis.csproj
+
+Apophis/Types/Extensions/Mixln/DecarateDefaultOperationExtension.cs
+Apophis/Types/Mixin/Functor.cs
+Apophis/Types/Mixin/IDecarateDefaultOperation.cs
