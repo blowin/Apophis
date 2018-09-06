@@ -8,7 +8,7 @@ using Apophis.Types.Policys.Check;
 
 namespace Apophis.Examples
 {
-    public static class Either
+    public static class EitherExample
     {
         public static void MergeExample()
         {

@@ -6,7 +6,7 @@ using Apophis.Types.Mixin;
 
 namespace Apophis.Types.Tuple
 {
-    public struct Tuple<T1, T2> : 
+    public struct Tup2<T1, T2> : 
         IEquatable<Tuple<T1, T2>>, 
         IComparable, 
         IComparable<Tuple<T1, T2>>,
@@ -43,7 +43,7 @@ namespace Apophis.Types.Tuple
         }
 
         [System.Runtime.CompilerServices.MethodImpl (System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public Tuple(T1 val, T2 val2)
+        public Tup2(T1 val, T2 val2)
         {
             if(val == null || val2 == null)
                 throw new NullReferenceException();
@@ -67,8 +67,12 @@ namespace Apophis.Types.Tuple
         [System.Runtime.CompilerServices.MethodImpl(
             System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public override string ToString()
-            => new StringBuilder(25).Append('(').Append(Item1.ToString()).Append(',').Append(Item2.ToString())
-                .Append(')').ToString();
+        {
+            var s1 = Item1.ToString();
+            var s2 = Item2.ToString();
+            return new StringBuilder(2 + s1.Length + s2.Length + 1)
+                .Append('(').Append(s1).Append(',').Append(s2).Append(')').ToString();
+        }
 
         [System.Runtime.CompilerServices.MethodImpl (System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public static Tuple<T1, T2> Of(T1 val, T2 val2) => new Tuple<T1, T2>(val, val2);

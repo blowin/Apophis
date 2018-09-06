@@ -5,10 +5,10 @@ using Apophis.Types.Mixin;
 
 namespace Apophis.Types.Tuple
 {
-    public struct Tuple<T1> : 
-        IEquatable<Tuple<T1>>, 
+    public struct Tup1<T1> : 
+        IEquatable<Tup1<T1>>, 
         IComparable, 
-        IComparable<Tuple<T1>>,
+        IComparable<Tup1<T1>>,
         ITuple,
         ITypeClass<TupleType>
     {
@@ -38,7 +38,7 @@ namespace Apophis.Types.Tuple
         }
 
         [System.Runtime.CompilerServices.MethodImpl (System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public Tuple(T1 val)
+        public Tup1(T1 val)
         {
             if(val == null)
                 throw new NullReferenceException();
@@ -50,8 +50,8 @@ namespace Apophis.Types.Tuple
         public override bool Equals(object obj)
         {
             return obj != null && 
-                   obj is Tuple<T1> && 
-                   Comparer<T1>.Default.Compare(((Tuple<T1>)obj).Item1, Item1) == 0;
+                   obj is Tup1<T1> && 
+                   Comparer<T1>.Default.Compare(((Tup1<T1>)obj).Item1, Item1) == 0;
         }
 
         [System.Runtime.CompilerServices.MethodImpl(
@@ -62,17 +62,17 @@ namespace Apophis.Types.Tuple
         public override string ToString() => string.Concat("(", Item1.ToString(), ")");
 
         [System.Runtime.CompilerServices.MethodImpl (System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public static Tuple<T1> Of(T1 val) => new Tuple<T1>(val);
+        public static Tup1<T1> Of(T1 val) => new Tup1<T1>(val);
 
         [System.Runtime.CompilerServices.MethodImpl(
             System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public bool Equals(Tuple<T1> other) => CompareTo(other) == 0;
+        public bool Equals(Tup1<T1> other) => CompareTo(other) == 0;
 
         [System.Runtime.CompilerServices.MethodImpl (System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public int CompareTo(object obj)
         {
-            if (obj != null && obj is Tuple<T1>)
-                return CompareTo((Tuple<T1>) obj);
+            if (obj != null && obj is Tup1<T1>)
+                return CompareTo((Tup1<T1>) obj);
 
             return -1;
         }
@@ -86,6 +86,6 @@ namespace Apophis.Types.Tuple
         public void apply(Action<T1> func) => func(Item1);
         
         [System.Runtime.CompilerServices.MethodImpl (System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public int CompareTo(Tuple<T1> other) => Comparer<T1>.Default.Compare(Item1, other.Item1);
+        public int CompareTo(Tup1<T1> other) => Comparer<T1>.Default.Compare(Item1, other.Item1);
     }
 }

@@ -98,7 +98,7 @@ namespace Apophis.Types.Monads.Try
         public override bool Equals(object obj) => CompareTo(obj) == 0;
 
         [System.Runtime.CompilerServices.MethodImpl (System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public override int GetHashCode() => _error != null ? _value.GetHashCode() : 924178;
+        public override int GetHashCode() => _error == null ? _value.GetHashCode() : _error.GetHashCode();
 
         [System.Runtime.CompilerServices.MethodImpl (System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public override string ToString() => _error != null ? string.Concat("Error(", _error.ToString(), ")") : string.Concat("Ok(", _error.ToString(), ")");
@@ -470,6 +470,7 @@ namespace Apophis.Types.Monads.Try
         [System.Runtime.CompilerServices.MethodImpl (System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
+        [System.Runtime.CompilerServices.MethodImpl (System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public int CompareTo(Try<T, TCheckPolicy> other)
         {
             if (_error != null)
@@ -481,6 +482,7 @@ namespace Apophis.Types.Monads.Try
         [System.Runtime.CompilerServices.MethodImpl (System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public int CompareTo(T other) => _error != null ? Comparer<T>.Default.Compare(_value, other) : -1;
 
+        [System.Runtime.CompilerServices.MethodImpl (System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public int CompareTo(object obj)
         {
             if (obj == null)
@@ -498,17 +500,67 @@ namespace Apophis.Types.Monads.Try
 
     public static class Try
     {
+        /// <summary>
+        /// Create Try who hold TError
+        /// </summary>
+        /// <typeparam name="TCheckPolicy">Check policy for try</typeparam>
         [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public static Try<T, TCheckPolicy> From<T, TError, TCheckPolicy>() 
             where TError : Exception, new()
             where TCheckPolicy : struct, ICheckPolicy => new Try<T, TCheckPolicy>(new TError());
         
+        /// <summary>
+        /// Return try, who run func and if result - success, then status Ok, otherwise - Error
+        /// </summary>
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public static Try<T, TCheckPolicy> From<T, TCheckPolicy>(Func<T> factory) 
+            where TCheckPolicy : struct, ICheckPolicy => new Try<T, TCheckPolicy>(factory);
+        
+        /// <summary>
+        /// Return Ok Try with value
+        /// </summary>
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public static Try<T, TCheckPolicy> From<T, TCheckPolicy>(T val) 
+            where TCheckPolicy : struct, ICheckPolicy => new Try<T, TCheckPolicy>(val);
+        
+        /// <summary>
+        /// Create Try who hold TError with &SafePolicy
+        /// </summary>
         [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public static Try<T, SafePolicy> FromSafe<T, TError>() 
             where TError : Exception, new() => new Try<T, SafePolicy>(new TError());
         
+        /// <summary>
+        /// Return try with &SafePolicy,
+        /// who run func and if result - success, then status Ok, otherwise - Error
+        /// </summary>
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public static Try<T, SafePolicy> FromSafe<T>(Func<T> factory) => new Try<T, SafePolicy>(factory);
+        
+        /// <summary>
+        /// Return Ok Try with value and &SafePolicy
+        /// </summary>
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public static Try<T, SafePolicy> FromSafe<T>(T val) => new Try<T, SafePolicy>(val);
+        
+        /// <summary>
+        /// Create Try who hold TError with &UnsafePolicy
+        /// </summary>
         [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public static Try<T, UnsafePolicy> FromUnsafe<T, TError>() 
             where TError : Exception, new() => new Try<T, UnsafePolicy>(new TError());
+        
+        /// <summary>
+        /// Return try with &UnsafePolicy,
+        /// who run func and if result - success, then status Ok, otherwise - Error
+        /// </summary>
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public static Try<T, UnsafePolicy> FromUnsafe<T>(Func<T> factory) => new Try<T, UnsafePolicy>(factory);
+        
+        /// <summary>
+        /// Return Ok Try with value and &UnsafePolicy
+        /// </summary>
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public static Try<T, UnsafePolicy> FromUnsafe<T>(T val) => new Try<T, UnsafePolicy>(val);
     }
 }
